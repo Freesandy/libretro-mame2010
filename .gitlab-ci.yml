@@ -1,0 +1,34 @@
+.core-defs:
+  variables:
+    CORENAME: mame2010
+
+include:
+  - template: Jobs/Code-Quality.gitlab-ci.yml
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/linux-x64.yml'
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/windows-x64-mingw.yml'
+
+stages:
+  - build-prepare
+  - build-shared
+  - build-static
+  - test
+
+#Desktop
+libretro-build-linux-x64:
+  extends:
+    - .core-defs
+    - .libretro-linux-x64-make-default
+
+libretro-build-windows-x64:
+  extends:
+    - .core-defs
+    - .libretro-windows-x64-mingw-make-default
+  variables:
+    CC:       x86_64-w64-mingw32-g++
+    CXX:      x86_64-w64-mingw32-g++
+    CC_AS:    x86_64-w64-mingw32-gcc
+    AR:       x86_64-w64-mingw32-ar
+    NATIVELD: x86_64-w64-mingw32-ld
+    LD:       x86_64-w64-mingw32-ld

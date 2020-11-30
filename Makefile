@@ -26,8 +26,6 @@ else ifneq ($(findstring win,$(UNAME)),)
 endif
 endif
 
-$(info Building for platform '$(platform)')
-
 # system platform
 system_platform = unix
 ifeq ($(UNAME),)
@@ -489,11 +487,12 @@ endif
 else
    TARGETLIB := $(TARGET_NAME)_libretro.dll
 	TARGETOS = win32
-	CC = g++
-	LD = g++
+	CC ?= g++
+	LD ?= g++
 	NATIVELD = $(LD)
-	CC_AS = gcc
-	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=src/osd/retro/link.T
+	CC_AS ?= gcc
+   BUILD_ZLIB = 1
+	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/osd/retro/link.T
 ifneq ($(MDEBUG),1)
 	SHARED += -s
 endif
@@ -796,13 +795,9 @@ tools: maketree $(TOOLS)
 maketree: $(sort $(OBJDIRS))
 
 clean: $(OSDCLEAN)
-	@echo Deleting object tree $(OBJ)...
 	$(RM) -r obj
-	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
-	@echo Deleting $(TOOLS)...
 	$(RM) $(TOOLS)
-	@echo Deleting dependencies...
 	$(RM) depend_mame.mak
 	$(RM) depend_mess.mak
 	$(RM) depend_ume.mak
@@ -837,7 +832,6 @@ endif
 # executable targets and dependencies
 #-------------------------------------------------
 $(EMULATOR): $(OBJECTS)
-	@echo Linking $(TARGETLIB)
 ifeq ($(platform), wiiu)
 ifeq ($(LITE),1)
 	echo $(LDFLAGS) $(LDFLAGSEMULATOR) $^ $(LIBS) -o $(TARGETLIB)
@@ -847,7 +841,7 @@ else
 	$(AR) -M < full.mri
 endif
 else
-	$(LD) $(LDFLAGS) $(LDFLAGSEMULATOR) $^ $(LIBS) -o $(TARGETLIB)
+	$(CXX) $(LDFLAGS) $(LDFLAGSEMULATOR) $^ $(LIBS) -o $(TARGETLIB)
 endif
 
 #endif
@@ -864,25 +858,23 @@ CFLAGS += -DDISABLE_SH2DRC
 endif
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CDEFS) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(OBJ)/%.c | $(OSPREBUILD)
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CDEFS) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/%.pp: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
+	$(CXX) $(CDEFS) $(CFLAGS) -E $< -o $@
 
 $(OBJ)/%.s: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
+	$(CXX) $(CDEFS) $(CFLAGS) -S $< -o $@
 
 $(DRIVLISTOBJ): $(DRIVLISTSRC)
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CDEFS) $(CFLAGS) -c $< -o $@
 
 $(DRIVLISTSRC): $(CORE_DIR)/src/$(TARGET)/$(SUBTARGET).lst $(MAKELIST_TARGET)
-	@echo Building driver list $<...
-	@$(MAKELIST) $< >$@
+	$(MAKELIST) $< >$@
 
 $(OBJ)/%.a:
-	@echo Archiving $@...
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $^
